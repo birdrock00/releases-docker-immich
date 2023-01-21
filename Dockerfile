@@ -19,6 +19,8 @@ RUN \
     g++ \
     libheif1 \
     libvips \
+    exiftool \
+    perl \
     libvips-dev \
     make \
     nginx-full \
