@@ -2,20 +2,24 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Sync Upstream
 
-# Keeps this fork's source identical to imagegenius/docker-immich. This repo
-# must never diverge from upstream except by adding new files (this workflow,
-# immich-release-notes.yaml) — never by editing anything upstream owns. That
-# way this merge stays conflict-free and upstream pushes to main (which
-# trigger Release the normal way) keep publishing to ghcr.io/birdrock00/immich
-# with the exact same build pipeline imagegenius uses.
+# Keeps this fork current with imagegenius/docker-immich every 2 weeks, so
+# the build pipeline and image contents track upstream exactly. This repo
+# adds new files (this workflow, immich-release-notes.yaml) and also edits
+# one upstream-owned file -- README.md, to carry the fork notice explaining
+# why this fork exists (see imagegenius/docker-immich#712) -- so a merge can
+# genuinely conflict if upstream touches the same README lines. On a clean
+# merge we push straight to main and reapply the notice with
+# scripts/reapply-fork-notice.py; on conflict we push the attempted merge to
+# a branch and open a PR instead of failing silently or overwriting anything.
 
 on:
   schedule:
-    - cron: '13 */6 * * *'
+    - cron: '43 4 */14 * *'
   workflow_dispatch: {}
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: sync-upstream
@@ -43,9 +47,52 @@ jobs:
           git remote add upstream https://github.com/imagegenius/docker-immich.git
           git fetch upstream main
 
-      - name: Fast-forward or merge upstream/main
+      - name: Attempt merge
+        id: merge
         run: |-
-          git merge --no-edit upstream/main
+          if git merge --no-edit upstream/main; then
+            echo "conflict=false" >> "$GITHUB_OUTPUT"
+          else
+            git merge --abort
+            echo "conflict=true" >> "$GITHUB_OUTPUT"
+            # Merge with conflict markers left in place so the PR shows
+            # reviewers exactly what needs manual resolution.
+            git merge --no-edit --no-ff -X ours upstream/main || true
+          fi
 
-      - name: Push
+      - name: Reapply fork notice
+        run: python3 scripts/reapply-fork-notice.py
+
+      - name: Commit fork-notice pass
+        run: |-
+          git add README.md
+          git diff --cached --quiet || git commit -m "chore: reapply fork README notice"
+
+      - name: Push clean merge
+        if: steps.merge.outputs.conflict == 'false'
         run: git push origin HEAD:main
+
+      - name: Push conflicting merge to a branch
+        id: push_conflict
+        if: steps.merge.outputs.conflict == 'true'
+        run: |-
+          branch="sync-upstream/conflict-$(date -u +%Y%m%d)"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          git push origin "HEAD:$branch" --force
+
+      - name: Open PR for manual resolution
+        if: steps.merge.outputs.conflict == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |-
+          branch="${{ steps.push_conflict.outputs.branch }}"
+          existing="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')"
+          if [ -n "$existing" ]; then
+            echo "PR #$existing already open for $branch, skipping"
+            exit 0
+          fi
+          gh pr create \
+            --title "Sync upstream: merge conflict needs manual resolution" \
+            --body "Automated sync from imagegenius/docker-immich main hit a conflict, most likely against the README fork notice this fork adds on top of upstream's README. Conflict markers are left in place on \`$branch\` -- resolve them and merge manually." \
+            --head "$branch" \
+            --base main
