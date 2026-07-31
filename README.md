@@ -25,8 +25,8 @@ Immich is a high performance self-hosted photo and video backup solution.
 Pin a specific upstream Immich release with the semver tag, optionally with the variant suffix:
 
 ```
-ghcr.io/imagegenius/immich:2.7.5
-ghcr.io/imagegenius/immich:2.7.5-cuda
+ghcr.io/birdrock00/immich:2.7.5
+ghcr.io/birdrock00/immich:2.7.5-cuda
 ```
 
 ## Requirements
@@ -47,7 +47,7 @@ ghcr.io/imagegenius/immich:2.7.5-cuda
 ---
 services:
   immich:
-    image: ghcr.io/imagegenius/immich:latest
+    image: ghcr.io/birdrock00/immich:latest
     container_name: immich
     environment:
       - PUID=1000
@@ -147,7 +147,7 @@ Set `PUID=1000` `PGID=1000` to match volume ownership on the host (`id user` to 
 ## Updating
 
 ```bash
-docker pull ghcr.io/imagegenius/immich:latest
+docker pull ghcr.io/birdrock00/immich:latest
 docker stop immich && docker rm immich
 # recreate with the same docker run parameters
 docker image prune  # optional: remove dangling images
