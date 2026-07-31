@@ -25,6 +25,13 @@ FORK_NOTICE = f"""<!-- FORK-NOTICE:START -->
 """
 
 
+# The image itself is still published as `immich` (upstream's own naming,
+# unrelated to this repo's name) but under this fork's owner, not
+# imagegenius's -- so pull/image-tag examples should point at the image
+# this fork actually publishes, not the upstream one.
+IMAGE_REF = re.compile(r"ghcr\.io/imagegenius/immich\b")
+
+
 def strip_existing_notice(text: str) -> str:
     return re.sub(
         r"<!-- FORK-NOTICE:START -->.*?<!-- FORK-NOTICE:END -->\n*",
@@ -39,6 +46,7 @@ def main() -> int:
         text = f.read()
 
     text = strip_existing_notice(text)
+    text = IMAGE_REF.sub("ghcr.io/birdrock00/immich", text)
 
     # Insert right after the first line (upstream's title line), or at the
     # top if the README was restructured so there's no clear first line.
