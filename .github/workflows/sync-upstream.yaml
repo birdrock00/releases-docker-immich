@@ -24,7 +24,7 @@ concurrency:
 jobs:
   sync:
     name: Merge imagegenius/docker-immich
-    if: github.repository == 'birdrock00/docker-immich'
+    if: github.repository == 'birdrock00/releases-docker-immich'
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
