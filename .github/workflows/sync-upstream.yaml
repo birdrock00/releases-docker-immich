@@ -1,0 +1,51 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Sync Upstream
+
+# Keeps this fork's source identical to imagegenius/docker-immich. This repo
+# must never diverge from upstream except by adding new files (this workflow,
+# immich-release-notes.yaml) — never by editing anything upstream owns. That
+# way this merge stays conflict-free and upstream pushes to main (which
+# trigger Release the normal way) keep publishing to ghcr.io/birdrock00/immich
+# with the exact same build pipeline imagegenius uses.
+
+on:
+  schedule:
+    - cron: '13 */6 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Merge imagegenius/docker-immich
+    if: github.repository == 'birdrock00/docker-immich'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Configure git identity
+        run: |-
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch upstream
+        run: |-
+          git remote add upstream https://github.com/imagegenius/docker-immich.git
+          git fetch upstream main
+
+      - name: Fast-forward or merge upstream/main
+        run: |-
+          git merge --no-edit upstream/main
+
+      - name: Push
+        run: git push origin HEAD:main
