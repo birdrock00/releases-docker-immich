@@ -1,0 +1,118 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Immich Release Notes
+
+# The one intentional difference between this fork and imagegenius/docker-immich:
+# every time an image is published for a new upstream Immich version, publish a
+# matching GitHub Release here carrying that Immich version's own release notes.
+# imagegenius archived their GitHub Releases page in favor of rolling image tags
+# (see https://github.com/imagegenius/docker-immich/issues/712), which makes it
+# hard to tell what's in a new image before pulling it. This restores that.
+
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: >-
+          Immich version to publish notes for, e.g. v3.1.0. Leave blank to use
+          the version currently pinned in docker-bake.hcl (normal auto-run
+          behavior). Set explicitly to backfill a past version.
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: immich-release-notes-${{ github.event.inputs.version || 'auto' }}
+  cancel-in-progress: false
+
+jobs:
+  publish-notes:
+    name: Publish Release Notes
+    if: >-
+      github.repository == 'birdrock00/docker-immich' &&
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Resolve Immich Version
+        id: version
+        env:
+          VERSION_INPUT: ${{ github.event.inputs.version }}
+        run: |-
+          if [ -n "$VERSION_INPUT" ]; then
+            VERSION="$VERSION_INPUT"
+          else
+            VERSION=$(grep -A2 'variable "VERSION"' docker-bake.hcl | grep default | sed -E 's/.*"(.*)".*/\1/')
+          fi
+          if [ -z "$VERSION" ]; then
+            echo "::error::could not resolve an Immich version"
+            exit 1
+          fi
+          echo "version=${VERSION}" >>"$GITHUB_OUTPUT"
+
+      - name: Skip if Release Already Exists
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |-
+          if gh release view "$VERSION" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "exists=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >>"$GITHUB_OUTPUT"
+          fi
+
+      - name: Fetch Upstream Immich Release
+        if: steps.existing.outputs.exists == 'false'
+        id: upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |-
+          if ! gh api "repos/immich-app/immich/releases/tags/${VERSION}" >"${RUNNER_TEMP}/upstream-release.json" 2>"${RUNNER_TEMP}/upstream-release.err"; then
+            echo "::error::no immich-app/immich release found for tag ${VERSION}"
+            cat "${RUNNER_TEMP}/upstream-release.err"
+            exit 1
+          fi
+          jq --raw-output '.name' "${RUNNER_TEMP}/upstream-release.json" >"${RUNNER_TEMP}/upstream-name.txt"
+          jq --raw-output '.html_url' "${RUNNER_TEMP}/upstream-release.json" >"${RUNNER_TEMP}/upstream-url.txt"
+          jq --raw-output '.body // ""' "${RUNNER_TEMP}/upstream-release.json" >"${RUNNER_TEMP}/upstream-body.md"
+          {
+            echo "name=$(cat "${RUNNER_TEMP}/upstream-name.txt")"
+            echo "url=$(cat "${RUNNER_TEMP}/upstream-url.txt")"
+          } >>"$GITHUB_OUTPUT"
+
+      - name: Compose Release Notes
+        if: steps.existing.outputs.exists == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          UPSTREAM_URL: ${{ steps.upstream.outputs.url }}
+        run: |-
+          {
+            echo "> Release notes copied from the upstream [Immich ${VERSION} release](${UPSTREAM_URL})."
+            echo "> This release marks the availability of \`ghcr.io/birdrock00/immich:${VERSION}\`, built by this fork's normal Release workflow (identical to imagegenius/docker-immich)."
+            echo
+            cat "${RUNNER_TEMP}/upstream-body.md"
+          } >"${RUNNER_TEMP}/release-body.md"
+
+      - name: Create Release
+        if: steps.existing.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          TITLE: ${{ steps.upstream.outputs.name }}
+        run: |-
+          gh release create "$VERSION" \
+            --repo "${{ github.repository }}" \
+            --target main \
+            --title "${TITLE:-$VERSION}" \
+            --notes-file "${RUNNER_TEMP}/release-body.md"
