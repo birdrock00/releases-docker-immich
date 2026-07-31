@@ -34,7 +34,7 @@ jobs:
   publish-notes:
     name: Publish Release Notes
     if: >-
-      github.repository == 'birdrock00/docker-immich' &&
+      github.repository == 'birdrock00/releases-docker-immich' &&
       (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-24.04
     steps:

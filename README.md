@@ -1,5 +1,11 @@
 # [imagegenius/immich](https://github.com/imagegenius/docker-immich)
 
+<!-- FORK-NOTICE:START -->
+> **This is [birdrock00/releases-docker-immich](https://github.com/birdrock00/releases-docker-immich)**, a fork of [imagegenius/docker-immich](https://github.com/imagegenius/docker-immich).
+> A GitHub Action ([sync-upstream.yaml](.github/workflows/sync-upstream.yaml)) merges every upstream commit into this fork every 2 weeks, so the build pipeline and image contents track imagegenius's own release exactly.
+> Separately, this fork guarantees GitHub Releases stay populated: imagegenius stopped publishing release notes on GitHub (only rolling image tags since 2026-05-18), so [immich-release-notes.yaml](.github/workflows/immich-release-notes.yaml) fires after every successful build and publishes a matching GitHub Release here -- with the real upstream [immich-app/immich](https://github.com/immich-app/immich) release notes for that pinned Immich version -- so `ghcr.io/birdrock00/immich` always has an accurate changelog, unlike the upstream repo it forks from.
+<!-- FORK-NOTICE:END -->
+
 [![GitHub Release](https://img.shields.io/github/release/imagegenius/docker-immich.svg?color=007EC6&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/imagegenius/docker-immich/releases)
 [![GitHub Package Repository](https://shields.io/badge/GitHub%20Package-blue?logo=github&logoColor=ffffff&style=for-the-badge)](https://github.com/imagegenius/docker-immich/packages)
 
