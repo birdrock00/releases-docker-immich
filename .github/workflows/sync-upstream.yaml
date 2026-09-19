@@ -73,7 +73,10 @@ jobs:
 
       - name: Commit fork-notice pass
         run: |-
-          git add README.md
+          # In the conflict path the merge left unmerged entries; stage
+          # everything (including marker-containing files) so the merge can
+          # be committed and pushed for manual resolution.
+          git add -A
           git diff --cached --quiet || git commit -m "chore: reapply fork README notice"
 
       - name: Push clean merge
