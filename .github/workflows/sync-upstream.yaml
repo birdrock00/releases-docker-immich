@@ -102,8 +102,17 @@ jobs:
             echo "PR #$existing already open for $branch, skipping"
             exit 0
           fi
-          gh pr create \
-            --title "Sync upstream: merge conflict needs manual resolution" \
-            --body "Automated sync from imagegenius/docker-immich main hit a conflict, most likely against the README fork notice this fork adds on top of upstream's README. Conflict markers are left in place on \`$branch\` -- resolve them and merge manually." \
-            --head "$branch" \
-            --base main
+          # The branch was pushed seconds ago; GitHub's PR API can briefly
+          # report "No commits between" until the push is fully indexed.
+          # Retry with backoff so a race doesn't fail the whole sync.
+          for i in 1 2 3 4 5; do
+            if gh pr create \
+              --title "Sync upstream: merge conflict needs manual resolution" \
+              --body "Automated sync from imagegenius/docker-immich main hit a conflict, most likely against the README fork notice this fork adds on top of upstream's README. Conflict markers are left in place on \`$branch\` -- resolve them and merge manually." \
+              --head "$branch" \
+              --base main; then
+              break
+            fi
+            echo "PR creation attempt $i failed, retrying in 15s..."
+            sleep 15
+          done
