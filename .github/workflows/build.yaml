@@ -162,12 +162,22 @@ jobs:
       - name: Export Digests
         if: ${{ inputs.release }}
         env:
-          METADATA: ${{ steps.bake.outputs.metadata }}
           VARIANTS: ${{ toJson(matrix.variants) }}
           ARCH: ${{ matrix.arch }}
         run: |-
+          # Read the bake metadata from the file docker/actions-toolkit writes
+          # under RUNNER_TEMP instead of passing steps.bake.outputs.metadata
+          # through this step's environment. With all four variants the JSON
+          # is >1MB and the runner fails to even spawn bash:
+          # "Argument list too long".
+          METADATA=$(find "$RUNNER_TEMP" -type f -name 'bake-metadata-*.json' -printf '%T@\t%p\n' | sort -nr | head -n1 | cut -f2-)
+          if [ -z "$METADATA" ]; then
+            echo "::error::no bake metadata file found under $RUNNER_TEMP"
+            exit 1
+          fi
+          echo "Using bake metadata: $METADATA"
           while read -r variant; do
-            digest=$(jq -er --arg target "image-$variant" '.[$target]["containerimage.digest"] | select(test("^sha256:[0-9a-f]{64}$"))' <<<"$METADATA")
+            digest=$(jq -er --arg target "image-$variant" '.[$target]["containerimage.digest"] | select(test("^sha256:[0-9a-f]{64}$"))' "$METADATA")
             mkdir -p "$RUNNER_TEMP/digests/$variant"
             printf '%s\n' "$digest" >"$RUNNER_TEMP/digests/$variant/$ARCH"
           done < <(jq -r '.[]' <<<"$VARIANTS")
