@@ -6,17 +6,17 @@ variable "OWNER" {
 
 variable "IMMICH_BASE_IMAGES_VERSION" {
   # renovate: datasource=github-tags depName=immich-app/base-images versioning=regex:^(?<major>\d{8})(?<minor>\d{4})$
-  default = "202609081109"
+  default = "202609281550"
 }
 
 variable "VERSION" {
   # renovate: datasource=github-tags depName=immich-app/immich versioning=semver
-  default = "v3.2.2"
+  default = "v3.2.4"
 }
 
 variable "NODEJS_VERSION" {
   # renovate: datasource=node-version depName=node versioning=node
-  default = "24.15.0"
+  default = "24.21.0"
 }
 
 variable "UV_IMAGE_REPOSITORY" {
@@ -122,4 +122,8 @@ group "image-multiarch" {
 
 group "image-amd64-only" {
   targets = ["image-cuda", "image-openvino"]
+}
+
+group "image-all" {
+  targets = ["image-main", "image-noml", "image-cuda", "image-openvino"]
 }
