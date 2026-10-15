@@ -15,7 +15,10 @@ jobs:
     name: Stale
     runs-on: ubuntu-26.04
     permissions:
+<<<<<<< HEAD
       actions: write
+=======
+>>>>>>> upstream/main
       contents: write
       issues: write
       pull-requests: write

@@ -6,6 +6,7 @@
 > Separately, this fork guarantees GitHub Releases stay populated: imagegenius stopped publishing release notes on GitHub (only rolling image tags since 2026-05-18), and a request to link the upstream Immich changelog when bumping versions was raised in [imagegenius/docker-immich#712](https://github.com/imagegenius/docker-immich/issues/712) and closed without being addressed. So [immich-release-notes.yaml](.github/workflows/immich-release-notes.yaml) fires after every successful build and publishes a matching GitHub Release here -- with the real upstream [immich-app/immich](https://github.com/immich-app/immich) release notes for that pinned Immich version -- so `ghcr.io/birdrock00/immich` always has an accurate changelog, unlike the upstream repo it forks from.
 <!-- FORK-NOTICE:END -->
 
+<<<<<<< HEAD
 [![GitHub Release](https://img.shields.io/github/release/imagegenius/docker-immich.svg?color=007EC6&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/imagegenius/docker-immich/releases)
 [![GitHub Package Repository](https://shields.io/badge/GitHub%20Package-blue?logo=github&logoColor=ffffff&style=for-the-badge)](https://github.com/imagegenius/docker-immich/packages)
 
@@ -15,6 +16,17 @@ Immich is a high performance self-hosted photo and video backup solution.
 
 ## Variants
 
+=======
+[![GitHub Release](https://img.shields.io/github/release/imagegenius/docker-immich.svg?color=007EC6&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/imagegenius/docker-immich/releases)
+[![GitHub Package Repository](https://shields.io/badge/GitHub%20Package-blue?logo=github&logoColor=ffffff&style=for-the-badge)](https://github.com/imagegenius/docker-immich/packages)
+
+Immich is a high performance self-hosted photo and video backup solution.
+
+[![immich](https://raw.githubusercontent.com/immich-app/immich/main/design/immich-logo-inline-dark.png)](https://immich.app/)
+
+## Variants
+
+>>>>>>> upstream/main
 | Tag        | Description                         | Platforms    |
 | ---------- | ----------------------------------- | ------------ |
 | `latest`   | Ubuntu + ML (CPU)                   | amd64, arm64 |
@@ -25,8 +37,13 @@ Immich is a high performance self-hosted photo and video backup solution.
 Pin a specific upstream Immich release with the semver tag, optionally with the variant suffix:
 
 ```
+<<<<<<< HEAD
 ghcr.io/birdrock00/immich:2.7.5
 ghcr.io/birdrock00/immich:2.7.5-cuda
+=======
+ghcr.io/birdrock00/immich:2.7.5
+ghcr.io/birdrock00/immich:2.7.5-cuda
+>>>>>>> upstream/main
 ```
 
 ## Requirements
@@ -47,7 +64,11 @@ ghcr.io/birdrock00/immich:2.7.5-cuda
 ---
 services:
   immich:
+<<<<<<< HEAD
     image: ghcr.io/birdrock00/immich:latest
+=======
+    image: ghcr.io/birdrock00/immich:latest
+>>>>>>> upstream/main
     container_name: immich
     environment:
       - PUID=1000
@@ -147,7 +168,11 @@ Set `PUID=1000` `PGID=1000` to match volume ownership on the host (`id user` to 
 ## Updating
 
 ```bash
+<<<<<<< HEAD
 docker pull ghcr.io/birdrock00/immich:latest
+=======
+docker pull ghcr.io/birdrock00/immich:latest
+>>>>>>> upstream/main
 docker stop immich && docker rm immich
 # recreate with the same docker run parameters
 docker image prune  # optional: remove dangling images

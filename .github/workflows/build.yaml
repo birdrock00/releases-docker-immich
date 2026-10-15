@@ -22,6 +22,7 @@ permissions:
   contents: read
 
 jobs:
+<<<<<<< HEAD
   plan:
     name: Plan
     runs-on: ubuntu-26.04
@@ -219,6 +220,18 @@ jobs:
             echo "::endgroup::"
           done < <(jq -r '.[]' <<<"$VARIANTS")
           exit "$failed"
+=======
+  build:
+    name: Build
+    uses: $/.github/workflows/build-image.yaml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      variant: ${{ inputs.variant }}
+      no-cache: ${{ inputs.no-cache }}
+      release: ${{ inputs.release }}
+>>>>>>> upstream/main
 
   publish:
     if: ${{ inputs.release }}
@@ -230,12 +243,19 @@ jobs:
       attestations: write
       id-token: write
     needs:
+<<<<<<< HEAD
       - plan
+=======
+>>>>>>> upstream/main
       - build
     strategy:
       fail-fast: false
       matrix:
+<<<<<<< HEAD
         variant: ${{ fromJson(needs.plan.outputs.variants) }}
+=======
+        variant: ${{ fromJson(needs.build.outputs.variants) }}
+>>>>>>> upstream/main
     steps:
       - name: Download Bake Metadata
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2

@@ -15,12 +15,18 @@ concurrency:
 
 jobs:
   build:
+<<<<<<< HEAD
     uses: $/.github/workflows/build.yaml
     permissions:
       attestations: write
       contents: read
       id-token: write
       packages: write
+=======
+    uses: $/.github/workflows/build-image.yaml
+    permissions:
+      contents: read
+>>>>>>> upstream/main
     with:
       variant: all
       release: false
