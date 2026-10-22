@@ -6,17 +6,17 @@ variable "OWNER" {
 
 variable "IMMICH_BASE_IMAGES_VERSION" {
   # renovate: datasource=github-tags depName=immich-app/base-images versioning=regex:^(?<major>\d{8})(?<minor>\d{4})$
-  default = "202610131110"
+  default = "202610211607"
 }
 
 variable "VERSION" {
   # renovate: datasource=github-tags depName=immich-app/immich versioning=semver
-  default = "v3.3.3"
+  default = "v3.3.5"
 }
 
 variable "NODEJS_VERSION" {
   # renovate: datasource=node-version depName=node versioning=node
-  default = "24.21.0"
+  default = "24.22.1"
 }
 
 variable "UV_IMAGE_REPOSITORY" {
@@ -25,7 +25,7 @@ variable "UV_IMAGE_REPOSITORY" {
 
 variable "UV_IMAGE_VERSION" {
   # renovate: datasource=docker depName=ghcr.io/astral-sh/uv versioning=docker
-  default = "0.11.29"
+  default = "0.13.4"
 }
 
 variable "MISE_IMAGE_REPOSITORY" {
