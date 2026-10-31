@@ -68,6 +68,34 @@ jobs:
             git merge --no-edit --no-ff upstream/main || true
           fi
 
+      - name: Keep workflow files parseable
+        if: steps.merge.outputs.conflict == 'true'
+        run: |-
+          # Conflict markers inside .github/workflows/* are not merely ugly: on
+          # every push Actions parses each workflow file on the branch and opens
+          # a failing "workflow file issue" run for the ones that are no longer
+          # valid YAML. That is what made sync-upstream/conflict-20261029 show up
+          # as Label Sync / Vulnerability Scan failures. Markers stay in the files
+          # a human actually has to think about (README.md and friends); for
+          # workflow files take upstream's side, since this fork only ever *adds*
+          # workflows and its own copies are what main runs today. The list lands
+          # in the job summary so the PR still shows what was auto-resolved.
+          {
+            echo "## Conflicted workflow files auto-resolved to upstream's side"
+            echo '```'
+            git diff --name-only --diff-filter=U -- .github/workflows | while read -r f; do
+              if git checkout --theirs -- "$f" 2>/dev/null; then
+                echo "$f (took upstream/main)"
+              else
+                # delete/modify conflict: upstream deleted it, we modified it.
+                git checkout --ours -- "$f"
+                echo "$f (kept ours, upstream deleted it)"
+              fi
+              git add -- "$f"
+            done
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Reapply fork notice
         run: python3 scripts/reapply-fork-notice.py
 
@@ -89,6 +117,16 @@ jobs:
         run: |-
           branch="sync-upstream/conflict-$(date -u +%Y%m%d)"
           echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          # Belt and braces for the step above: refuse to publish a branch whose
+          # workflow files would fail to parse. Reset any leftover marker to
+          # main's copy rather than shipping a guaranteed-red check run.
+          leftover="$(grep -rlE '^(<<<<<<< |>>>>>>> )' .github/workflows 2>/dev/null || true)"
+          if [ -n "$leftover" ]; then
+            echo "::warning title=Unparsed workflow files::resetting to main's copy: $(echo $leftover)"
+            # shellcheck disable=SC2086
+            git checkout origin/main -- $leftover && git add -- $leftover
+            git diff --cached --quiet || git commit -m "chore: keep workflow files parseable on the conflict branch"
+          fi
           git push origin "HEAD:$branch" --force
 
       - name: Open PR for manual resolution
