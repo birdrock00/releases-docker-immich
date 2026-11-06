@@ -11,10 +11,11 @@ permissions:
 
 concurrency:
   group: pr-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
+    name: Image
     uses: $/.github/workflows/build.yaml
     permissions:
       attestations: write
@@ -28,11 +29,13 @@ jobs:
   status:
     if: ${{ !cancelled() }}
     name: Build Success
-    needs: build
+    needs:
+      - build
     runs-on: ubuntu-26.04
+    timeout-minutes: 5
     permissions: {}
     steps:
-      - name: Check Build Result
+      - name: Check results
         env:
-          RESULT: ${{ needs.build.result }}
-        run: test "$RESULT" = success
+          RESULTS: ${{ toJSON(needs) }}
+        run: jq -e 'all(.[]; .result == "success")' <<<"$RESULTS"
