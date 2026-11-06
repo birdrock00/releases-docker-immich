@@ -121,7 +121,7 @@ jobs:
 
       - name: Login to GitHub Container Registry
         if: ${{ inputs.release }}
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -151,6 +151,12 @@ jobs:
           REVISION: ${{ github.sha }}
           RELEASE: ${{ inputs.release }}
         run: bash .github/scripts/prepare-bake.sh
+
+      - name: Resolve Upstream Build Inputs
+        # docker-bake.hcl variables without defaults (UV_IMAGE, MISE_IMAGE,
+        # NODEJS_VERSION, ONNXRUNTIME_VERSION, IMMICH_BASE_IMAGES_VERSION)
+        # are resolved from the pinned immich source by upstream-inputs.sh.
+        run: bash .github/scripts/upstream-inputs.sh >>"$GITHUB_ENV"
 
       - name: Build Variants
         uses: docker/bake-action@59cb1203cd42bcefd40a1b6d73b589e48c86040e # v7.5.0
