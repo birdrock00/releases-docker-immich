@@ -6,7 +6,7 @@ variable "OWNER" {
 
 variable "VERSION" {
   # renovate: datasource=github-tags depName=immich-app/immich versioning=semver
-  default = "v3.3.6"
+  default = "v3.4.1"
 }
 
 # Upstream Immich pins these at VERSION; .github/scripts/upstream-inputs.sh reads them.
@@ -14,6 +14,8 @@ variable "IMMICH_BASE_IMAGES_VERSION" {}
 variable "MISE_IMAGE" {}
 variable "NODEJS_VERSION" {}
 variable "ONNXRUNTIME_VERSION" {}
+variable "RESTIC_IMAGE" {}
+variable "RESTIC_PROXY_IMAGE" {}
 variable "UV_IMAGE" {}
 
 variable "IMMICH_MEDIA_BUILD_JOBS" {
@@ -37,6 +39,8 @@ target "image" {
     MISE_IMAGE                 = "${MISE_IMAGE}"
     NODEJS_VERSION             = "${NODEJS_VERSION}"
     ONNXRUNTIME_VERSION        = "${ONNXRUNTIME_VERSION}"
+    RESTIC_IMAGE               = "${RESTIC_IMAGE}"
+    RESTIC_PROXY_IMAGE         = "${RESTIC_PROXY_IMAGE}"
     UV_IMAGE                   = "${UV_IMAGE}"
   }
   labels = {
