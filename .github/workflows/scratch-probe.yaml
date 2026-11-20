@@ -1,0 +1,32 @@
+name: Scratch artifact layout probe
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    steps:
+      - name: Make dummy file
+        run: echo '{"probe": true}' > dummy-bake-file.json
+      - name: Upload dummy
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: probe-bake-metadata
+          path: dummy-bake-file.json
+          if-no-files-found: error
+      - name: Download pattern
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: "*-bake-metadata"
+          path: ${{ runner.temp }}/metadata
+      - name: Dump layout
+        run: |
+          echo "=== ls -laR $RUNNER_TEMP/metadata ==="
+          ls -laR "$RUNNER_TEMP/metadata" 2>&1 || true
+          echo "=== find $RUNNER_TEMP ==="
+          find "$RUNNER_TEMP" \( -name '*probe*' -o -name '*dummy*' \) 2>/dev/null | head -20
+          echo "=== ls -la $RUNNER_TEMP ==="
+          ls -la "$RUNNER_TEMP"
