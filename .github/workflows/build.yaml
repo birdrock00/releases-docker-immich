@@ -133,6 +133,23 @@ jobs:
           pattern: "*-bake-metadata"
           path: ${{ runner.temp }}/metadata
 
+      - name: Normalize Bake Metadata Layout
+        # download-artifact v8 extracts a single matching artifact flat into
+        # path/ but organizes multiple matches into path/<artifact-name>/
+        # subdirectories. prepare-bake.sh expects the subdirectory layout, so
+        # restore it when the run only built one variant (e.g. variant=main).
+        run: |-
+          for variant in $(jq -r '.[]' <<<"${{ toJson(matrix.variants) }}"); do
+            want="$RUNNER_TEMP/metadata/$variant-bake-metadata/docker-metadata-action-bake.json"
+            [ -f "$want" ] && continue
+            flat="$RUNNER_TEMP/metadata/docker-metadata-action-bake.json"
+            if [ -f "$flat" ]; then
+              mkdir -p "$(dirname "$want")"
+              mv "$flat" "$want"
+              break
+            fi
+          done
+
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
         with:
